@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>DevBox — Developer Toolbox</title>
+<meta name="description" content="A fast, private, offline-first developer toolbox. JSON, Base64, JWT, hashing, UUID, timestamps, color & more — all in a single file." />
+<style>
+  :root {
+    --bg: #0d1117;
+    --bg-soft: #161b22;
+    --bg-elev: #1c2128;
+    --border: #30363d;
+    --text: #e6edf3;
+    --muted: #8b949e;
+    --accent: #58a6ff;
+    --accent-2: #7ee787;
+    --danger: #ff7b72;
+    --radius: 12px;
+    --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; }
+  body {
+    background: radial-gradient(1200px 600px at 80% -10%, #1f6feb22, transparent),
+                radial-gradient(900px 500px at -10% 110%, #7ee78711, transparent),
+                var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    -webkit-font-smoothing: antialiased;
+  }
+  header {
+    display: flex; align-items: center; gap: 12px;
+    padding: 18px 24px; border-bottom: 1px solid var(--border);
+    position: sticky; top: 0; backdrop-filter: blur(8px);
+    background: #0d1117cc; z-index: 10;
+  }
+  .logo {
+    width: 34px; height: 34px; border-radius: 9px;
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    display: grid; place-items: center; font-weight: 800; color: #0d1117;
+  }
+  header h1 { font-size: 18px; margin: 0; letter-spacing: .2px; }
+  header .tag { color: var(--muted); font-size: 13px; }
+  .wrap { display: flex; min-height: calc(100% - 71px); }
+  nav {
+    width: 220px; border-right: 1px solid var(--border);
+    padding: 14px 10px; display: flex; flex-direction: column; gap: 4px;
+    position: sticky; top: 71px; align-self: flex-start; height: calc(100vh - 71px);
+    overflow-y: auto;
+  }
+  nav button {
+    display: flex; align-items: center; gap: 10px; text-align: left;
+    background: transparent; color: var(--muted); border: 0; cursor: pointer;
+    padding: 10px 12px; border-radius: 8px; font-size: 14px; font-family: var(--sans);
+    transition: all .15s;
+  }
+  nav button:hover { background: var(--bg-soft); color: var(--text); }
+  nav button.active { background: var(--bg-elev); color: var(--text); box-shadow: inset 3px 0 0 var(--accent); }
+  nav .ico { font-size: 16px; width: 18px; text-align: center; }
+  main { flex: 1; padding: 26px 30px; max-width: 980px; }
+  .panel { display: none; animation: fade .25s ease; }
+  .panel.active { display: block; }
+  @keyframes fade { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+  h2 { margin: 0 0 4px; font-size: 22px; }
+  .sub { color: var(--muted); margin: 0 0 18px; font-size: 14px; }
+  label { display: block; font-size: 12px; text-transform: uppercase; letter-spacing: .6px; color: var(--muted); margin: 14px 0 6px; }
+  textarea, input[type=text], input[type=number], select {
+    width: 100%; background: var(--bg-soft); color: var(--text);
+    border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px;
+    font-family: var(--mono); font-size: 13px; resize: vertical; outline: none;
+    transition: border .15s;
+  }
+  textarea:focus, input:focus, select:focus { border-color: var(--accent); }
+  textarea { min-height: 130px; line-height: 1.5; }
+  .row { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+  .row > * { flex: 1; min-width: 120px; }
+  .btns { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 14px; }
+  button.act {
+    background: var(--bg-elev); color: var(--text); border: 1px solid var(--border);
+    padding: 9px 16px; border-radius: 9px; cursor: pointer; font-size: 13px; font-weight: 600;
+    font-family: var(--sans); transition: all .15s;
+  }
+  button.act:hover { border-color: var(--accent); transform: translateY(-1px); }
+  button.primary { background: var(--accent); color: #0d1117; border-color: var(--accent); }
+  button.primary:hover { box-shadow: 0 6px 20px #58a6ff44; }
+  .out { margin-top: 16px; }
+  pre.result {
+    background: var(--bg-soft); border: 1px solid var(--border); border-radius: 10px;
+    padding: 14px; font-family: var(--mono); font-size: 13px; overflow: auto;
+    white-space: pre-wrap; word-break: break-word; min-height: 20px; max-height: 380px;
+  }
+  .pill { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; }
+  .ok { background: #2ea04333; color: var(--accent-2); }
+  .err { background: #ff7b7233; color: var(--danger); }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .card { background: var(--bg-soft); border: 1px solid var(--border); border-radius: 10px; padding: 14px; }
+  .card h4 { margin: 0 0 8px; font-size: 13px; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; }
+  .big { font-family: var(--mono); font-size: 15px; word-break: break-all; }
+  .swatch { width: 100%; height: 70px; border-radius: 10px; border: 1px solid var(--border); margin-bottom: 10px; }
+  .muted { color: var(--muted); font-size: 13px; }
+  .toast {
+    position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(80px);
+    background: var(--accent-2); color: #0d1117; padding: 10px 20px; border-radius: 999px;
+    font-weight: 700; font-size: 13px; transition: transform .3s; z-index: 100;
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+  footer { padding: 18px 30px; color: var(--muted); font-size: 12px; border-top: 1px solid var(--border); }
+  a { color: var(--accent); text-decoration: none; }
+  @media (max-width: 760px) {
+    .wrap { flex-direction: column; }
+    nav { width: auto; flex-direction: row; flex-wrap: wrap; height: auto; position: static; border-right: 0; border-bottom: 1px solid var(--border); }
+    .grid2 { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">D</div>
+  <div>
+    <h1>DevBox</h1>
+    <div class="tag">A private, offline-first developer toolbox · runs entirely in your browser</div>
+  </div>
+</header>
+
+<div class="wrap">
+  <nav id="nav"></nav>
+  <main id="main"></main>
+</div>
+
+<footer>
+  100% client-side — nothing you type ever leaves your machine. · Built with vanilla JS, no dependencies. · <a href="https://github.com" target="_blank" rel="noopener">Open source</a>
+</footer>
+
+<div class="toast" id="toast">Copied!</div>
+
+<script>
+"use strict";
+
+/* ---------- tiny helpers ---------- */
+const $ = (sel, root=document) => root.querySelector(sel);
+const el = (tag, attrs={}, html="") => {
+  const n = document.createElement(tag);
+  Object.entries(attrs).forEach(([k,v]) => n.setAttribute(k,v));
+  if (html) n.innerHTML = html;
+  return n;
+};
+function toast(msg="Copied!") {
+  const t = $("#toast"); t.textContent = msg; t.classList.add("show");
+  clearTimeout(toast._t); toast._t = setTimeout(()=>t.classList.remove("show"), 1500);
+}
+async function copy(text) {
+  try { await navigator.clipboard.writeText(text); toast("Copied to clipboard"); }
+  catch { toast("Copy failed"); }
+}
+
+/* ---------- tool registry ---------- */
+const tools = [];
+const register = (t) => tools.push(t);
+
+/* ===== JSON ===== */
+register({
+  id: "json", icon: "{}", name: "JSON",
+  title: "JSON Formatter & Validator",
+  sub: "Beautify, minify and validate JSON. Catches syntax errors with helpful messages.",
+  render(root) {
+    root.append(
+      tag("label","Input"),
+      ta("json-in", '{"hello":"world","items":[1,2,3],"ok":true}'),
+      btns(
+        ["Beautify","primary", ()=>run(2)],
+        ["Minify","", ()=>run(0)],
+        ["Copy","", ()=>copy($("#json-out").textContent)]
+      ),
+      statusEl("json-status"),
+      pre("json-out")
+    );
+    function run(indent) {
+      const raw = $("#json-in").value;
+      try {
+        const parsed = JSON.parse(raw);
+        $("#json-out").textContent = JSON.stringify(parsed, null, indent);
+        setStatus("json-status", true, "Valid JSON · " + countKeys(parsed) + " keys");
+      } catch (e) {
+        $("#json-out").textContent = "";
+        setStatus("json-status", false, e.message);
+      }
+    }
+    function countKeys(o){ let n=0; (function walk(v){ if(v&&typeof v==="object"){ if(!Array.isArray(v)) n+=Object.keys(v).length; Object.values(v).forEach(walk);} })(o); return n; }
+  }
+});
+
+/* ===== Base64 ===== */
+register({
+  id: "base64", icon: "B64", name: "Base64",
+  title: "Base64 Encode / Decode",
+  sub: "Unicode-safe Base64 conversion for text and data URIs.",
+  render(root) {
+    root.append(
+      tag("label","Text"),
+      ta("b64-in","Hello, DevBox! 🚀"),
+      btns(
+        ["Encode →","primary", enc],
+        ["← Decode","", dec],
+        ["Copy","", ()=>copy($("#b64-out").value)]
+      ),
+      tag("label","Result"),
+      ta("b64-out","")
+    );
+    function enc(){ try { $("#b64-out").value = btoa(unescape(encodeURIComponent($("#b64-in").value))); } catch(e){ $("#b64-out").value = "Error: "+e.message; } }
+    function dec(){ try { $("#b64-out").value = decodeURIComponent(escape(atob($("#b64-in").value.trim()))); } catch(e){ $("#b64-out").value = "Error: invalid Base64"; } }
+  }
+});
+
+/* ===== URL ===== */
+register({
+  id: "url", icon: "%", name: "URL Encode",
+  title: "URL Encode / Decode",
+  sub: "Percent-encode and decode URL components safely.",
+  render(root) {
+    root.append(
+      tag("label","Text"),
+      ta("url-in","https://example.com/search?q=hello world&lang=tr"),
+      btns(
+        ["Encode →","primary", ()=>$("#url-out").value = encodeURIComponent($("#url-in").value)],
+        ["← Decode","", ()=>{ try{$("#url-out").value=decodeURIComponent($("#url-in").value)}catch{$("#url-out").value="Error: malformed input"} }],
+        ["Copy","", ()=>copy($("#url-out").value)]
+      ),
+      tag("label","Result"),
+      ta("url-out","")
+    );
+  }
+});
+
+/* ===== JWT ===== */
+register({
+  id: "jwt", icon: "🔑", name: "JWT Decoder",
+  title: "JWT Decoder",
+  sub: "Inspect the header and payload of a JSON Web Token. Decoding only — no signature verification.",
+  render(root) {
+    root.append(
+      tag("label","Token"),
+      ta("jwt-in",""),
+      btns(["Decode","primary", run]),
+      statusEl("jwt-status"),
+      el("div",{class:"grid2"},
+        '<div><label style="margin-top:0">Header</label><pre class="result" id="jwt-head"></pre></div>'+
+        '<div><label style="margin-top:0">Payload</label><pre class="result" id="jwt-body"></pre></div>'
+      )
+    );
+    function b64url(s){ s=s.replace(/-/g,"+").replace(/_/g,"/"); while(s.length%4)s+="="; return decodeURIComponent(escape(atob(s))); }
+    function run(){
+      const parts = $("#jwt-in").value.trim().split(".");
+      if (parts.length < 2) { setStatus("jwt-status", false, "Not a valid JWT (expected header.payload.signature)"); return; }
+      try {
+        const h = JSON.parse(b64url(parts[0]));
+        const p = JSON.parse(b64url(parts[1]));
+        $("#jwt-head").textContent = JSON.stringify(h,null,2);
+        $("#jwt-body").textContent = JSON.stringify(p,null,2);
+        let extra = "";
+        if (p.exp) { const d=new Date(p.exp*1000); extra = " · expires "+d.toLocaleString()+(d<new Date()?" (EXPIRED)":""); }
+        setStatus("jwt-status", true, "Decoded "+h.alg+" token"+extra);
+      } catch(e){ setStatus("jwt-status", false, "Decode failed: "+e.message); }
+    }
+  }
+});
+
+/* ===== Hash ===== */
+register({
+  id: "hash", icon: "#", name: "Hash",
+  title: "Hash Generator",
+  sub: "SHA-1, SHA-256 and SHA-512 digests via the Web Crypto API.",
+  render(root) {
+    root.append(
+      tag("label","Text"),
+      ta("hash-in","The quick brown fox"),
+      btns(["Generate","primary", run]),
+      el("div",{class:"out", id:"hash-out"})
+    );
+    async function digest(algo, str){
+      const buf = await crypto.subtle.digest(algo, new TextEncoder().encode(str));
+      return [...new Uint8Array(buf)].map(b=>b.toString(16).padStart(2,"0")).join("");
+    }
+    async function run(){
+      const s = $("#hash-in").value;
+      const algos = ["SHA-1","SHA-256","SHA-512"];
+      const out = $("#hash-out"); out.innerHTML = "";
+      for (const a of algos){
+        const h = await digest(a, s);
+        const card = el("div",{class:"card"});
+        card.innerHTML = `<h4>${a}</h4><div class="big">${h}</div>`;
+        const b = el("button",{class:"act"},"Copy"); b.style.marginTop="10px";
+        b.onclick = ()=>copy(h); card.append(b);
+        out.append(card);
+      }
+    }
+  }
+});
+
+/* ===== UUID ===== */
+register({
+  id: "uuid", icon: "ID", name: "UUID",
+  title: "UUID Generator",
+  sub: "Cryptographically strong RFC 4122 version 4 identifiers.",
+  render(root) {
+    root.append(
+      el("div",{class:"row"},
+        '<div style="flex:0 0 140px"><label style="margin-top:0">Count</label><input type="number" id="uuid-n" value="5" min="1" max="100"></div>'
+      ),
+      btns(["Generate","primary", run],["Copy all","", ()=>copy($("#uuid-out").textContent)]),
+      pre("uuid-out")
+    );
+    function run(){
+      const n = Math.min(100, Math.max(1, parseInt($("#uuid-n").value)||1));
+      const arr = Array.from({length:n}, ()=> crypto.randomUUID ? crypto.randomUUID() : fallback());
+      $("#uuid-out").textContent = arr.join("\n");
+    }
+    function fallback(){ return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g,c=>{const r=Math.random()*16|0;return (c==="x"?r:(r&0x3|0x8)).toString(16);}); }
+    run();
+  }
+});
+
+/* ===== Timestamp ===== */
+register({
+  id: "time", icon: "⏱", name: "Timestamp",
+  title: "Unix Timestamp Converter",
+  sub: "Convert between Unix epoch seconds and human-readable dates.",
+  render(root) {
+    root.append(
+      tag("label","Unix timestamp (seconds)"),
+      el("div",{class:"row"},
+        '<input type="text" id="ts-in" placeholder="e.g. 1700000000">'
+      ),
+      btns(["To date →","primary", toDate],["Now","", now]),
+      el("div",{class:"grid2", id:"ts-cards"})
+    );
+    function show(d){
+      $("#ts-cards").innerHTML =
+        `<div class="card"><h4>Local</h4><div class="big">${d.toLocaleString()}</div></div>`+
+        `<div class="card"><h4>UTC / ISO</h4><div class="big">${d.toISOString()}</div></div>`+
+        `<div class="card"><h4>Unix (s)</h4><div class="big">${Math.floor(d.getTime()/1000)}</div></div>`+
+        `<div class="card"><h4>Relative</h4><div class="big">${rel(d)}</div></div>`;
+    }
+    function toDate(){ const v=parseInt($("#ts-in").value.trim()); if(isNaN(v))return; show(new Date((v+"").length>12?v:v*1000)); }
+    function now(){ const d=new Date(); $("#ts-in").value=Math.floor(d.getTime()/1000); show(d); }
+    function rel(d){ const s=(d-Date.now())/1000; const a=Math.abs(s); const u=[[31536000,"year"],[2592000,"month"],[86400,"day"],[3600,"hour"],[60,"min"],[1,"sec"]]; for(const[k,n]of u){if(a>=k){const v=Math.round(a/k);return (s<0?v+" "+n+(v>1?"s":"")+" ago":"in "+v+" "+n+(v>1?"s":""));}} return "just now"; }
+    now();
+  }
+});
+
+/* ===== Color ===== */
+register({
+  id: "color", icon: "🎨", name: "Color",
+  title: "Color Converter",
+  sub: "Convert between HEX, RGB and HSL with a live preview.",
+  render(root) {
+    root.append(
+      tag("label","HEX color"),
+      el("div",{class:"row"},
+        '<input type="text" id="col-in" value="#58a6ff">',
+        '<input type="color" id="col-pick" value="#58a6ff" style="flex:0 0 60px;height:44px;padding:4px">'
+      ),
+      el("div",{class:"swatch", id:"col-sw"}),
+      el("div",{class:"grid2", id:"col-cards"})
+    );
+    const inp=$("#col-in"), pick=$("#col-pick");
+    inp.oninput = ()=>{ pick.value = normalize(inp.value)||pick.value; update(); };
+    pick.oninput = ()=>{ inp.value = pick.value; update(); };
+    function normalize(h){ h=h.trim(); if(/^#?[0-9a-f]{6}$/i.test(h)) return (h[0]==="#"?h:"#"+h); if(/^#?[0-9a-f]{3}$/i.test(h)){h=h.replace("#","");return "#"+h.split("").map(c=>c+c).join("");} return null; }
+    function update(){
+      const hex = normalize(inp.value); if(!hex){ $("#col-sw").style.background="transparent"; return; }
+      const r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);
+      const [h,s,l]=rgb2hsl(r,g,b);
+      $("#col-sw").style.background=hex;
+      $("#col-cards").innerHTML =
+        card("HEX",hex.toUpperCase())+card("RGB",`rgb(${r}, ${g}, ${b})`)+
+        card("HSL",`hsl(${h}, ${s}%, ${l}%)`)+card("Luminance", luminance(r,g,b)+" → "+(luminance(r,g,b)>0.5?"dark text":"light text"));
+    }
+    function card(t,v){ return `<div class="card"><h4>${t}</h4><div class="big" onclick="navigator.clipboard&&navigator.clipboard.writeText('${v}')" style="cursor:pointer">${v}</div></div>`; }
+    function rgb2hsl(r,g,b){ r/=255;g/=255;b/=255; const mx=Math.max(r,g,b),mn=Math.min(r,g,b); let h,s,l=(mx+mn)/2; if(mx===mn){h=s=0;}else{const d=mx-mn;s=l>0.5?d/(2-mx-mn):d/(mx+mn);switch(mx){case r:h=(g-b)/d+(g<b?6:0);break;case g:h=(b-r)/d+2;break;default:h=(r-g)/d+4;}h/=6;} return [Math.round(h*360),Math.round(s*100),Math.round(l*100)]; }
+    function luminance(r,g,b){ return +(0.2126*r/255+0.7152*g/255+0.0722*b/255).toFixed(3); }
+    update();
+  }
+});
+
+/* ===== Text stats ===== */
+register({
+  id: "text", icon: "Aa", name: "Text Tools",
+  title: "Text Tools & Stats",
+  sub: "Live character / word counts and instant case transforms.",
+  render(root) {
+    root.append(
+      tag("label","Text"),
+      ta("txt-in","Type or paste your text here..."),
+      el("div",{class:"out", id:"txt-stats"}),
+      btns(
+        ["UPPER","",()=>tx(s=>s.toUpperCase())],
+        ["lower","",()=>tx(s=>s.toLowerCase())],
+        ["Title","",()=>tx(s=>s.replace(/\w\S*/g,w=>w[0].toUpperCase()+w.slice(1).toLowerCase()))],
+        ["camelCase","",()=>tx(toCamel)],
+        ["snake_case","",()=>tx(s=>slug(s,"_"))],
+        ["kebab-case","",()=>tx(s=>slug(s,"-"))],
+        ["Reverse","",()=>tx(s=>[...s].reverse().join(""))]
+      )
+    );
+    const inp=$("#txt-in"); inp.oninput=stats; stats();
+    function tx(fn){ inp.value=fn(inp.value); stats(); }
+    function toCamel(s){ return s.toLowerCase().replace(/[^a-z0-9]+(.)/g,(_,c)=>c.toUpperCase()); }
+    function slug(s,sep){ return s.trim().toLowerCase().replace(/[^a-z0-9]+/g,sep).replace(new RegExp("^"+sep+"|"+sep+"$","g"),""); }
+    function stats(){
+      const s=inp.value, words=(s.trim().match(/\S+/g)||[]).length, lines=s?s.split(/\n/).length:0;
+      $("#txt-stats").innerHTML =
+        `<div class="grid2">
+          <div class="card"><h4>Characters</h4><div class="big">${s.length}</div></div>
+          <div class="card"><h4>Words</h4><div class="big">${words}</div></div>
+          <div class="card"><h4>Lines</h4><div class="big">${lines}</div></div>
+          <div class="card"><h4>Reading time</h4><div class="big">${Math.max(1,Math.ceil(words/200))} min</div></div>
+        </div>`;
+    }
+  }
+});
+
+/* ---------- shared UI builders ---------- */
+function tag(t,html){ return el(t,{},html); }
+function ta(id,val){ const t=el("textarea",{id, spellcheck:"false"}); t.value=val; return t; }
+function pre(id){ return el("pre",{class:"result", id}); }
+function statusEl(id){ const d=el("div",{class:"out", id}); return d; }
+function setStatus(id, ok, msg){ $("#"+id).innerHTML = `<span class="pill ${ok?'ok':'err'}">${ok?'✓ '+msg:'✗ '+msg}</span>`; }
+function btns(...defs){
+  const d=el("div",{class:"btns"});
+  defs.forEach(([label,cls,fn])=>{ const b=el("button",{class:"act "+(cls||"")},label); b.onclick=fn; d.append(b); });
+  return d;
+}
+
+/* ---------- bootstrap ---------- */
+const nav=$("#nav"), main=$("#main");
+tools.forEach((t,i)=>{
+  const b=el("button",{"data-id":t.id});
+  b.innerHTML=`<span class="ico">${t.icon}</span><span>${t.name}</span>`;
+  b.onclick=()=>select(t.id);
+  nav.append(b);
+  const p=el("section",{class:"panel", id:"panel-"+t.id});
+  p.append(el("h2",{},t.title), el("p",{class:"sub"},t.sub));
+  const body=el("div",{});
+  p.append(body); t.render(body);
+  main.append(p);
+});
+function select(id){
+  tools.forEach(t=>{
+    $("#panel-"+t.id).classList.toggle("active", t.id===id);
+    $(`nav button[data-id="${t.id}"]`).classList.toggle("active", t.id===id);
+  });
+  location.hash=id;
+}
+select((location.hash||"").slice(1) && tools.some(t=>t.id===location.hash.slice(1)) ? location.hash.slice(1) : tools[0].id);
+</script>
+</body>
+</html>
